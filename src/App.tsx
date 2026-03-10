@@ -6,7 +6,7 @@ import './index.css';
 const App: React.FC = () => {
   return (
     <div className="dashboard-container">
-      <div className="main-layout" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+      <div className="main-layout">
         <TopBar />
         
         <main className="main-content">
