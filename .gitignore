@@ -46,6 +46,9 @@ backend/test_norm.py
 backend/model_debug.txt
 backend/*.log
 
+# Local test MRI images and sample data
+Testing/
+
 # ML model weights (place locally; too large for git)
 Model/*.h5
 Model/*.keras
