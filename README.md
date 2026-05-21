@@ -30,41 +30,45 @@ NeuroScan AI is a state-of-the-art diagnostic workspace designed for neuro-radio
 
 ## 🛠️ Technology Stack
 
-- **Core**: [React 19](https://react.dev/), [TypeScript](https://www.typescriptlang.org/), [Vite](https://vitejs.dev/)
+- **Frontend**: [React 19](https://react.dev/), [TypeScript](https://www.typescriptlang.org/), [Vite](https://vitejs.dev/)
+- **Backend**: [FastAPI](https://fastapi.tiangolo.com/), [Python 3.9+](https://www.python.org/)
+- **AI/ML**: [TensorFlow/Keras](https://www.tensorflow.org/), [OpenCV](https://opencv.org/)
 - **Animations**: [Framer Motion](https://www.framer.com/motion/)
 - **Icons**: [Lucide React](https://lucide.dev/)
 - **Reporting**: [jsPDF](https://github.com/parallax/jsPDF), [html2canvas](https://html2canvas.hertzen.com/)
-- **Styling**: Vanilla CSS3 with a Custom Design System
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
 - Node.js (v18 or higher)
+- Python 3.9 or higher
 - npm or yarn
 
-### Installation
+### Installation & Setup
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/your-username/brain-tumor-detection.git
-   cd brain-tumor-detection
-   ```
+#### 1. Model weights
+Place your trained Keras model at `Model/brain_tumor_model.h5` (not tracked in git due to size).
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
+#### 2. Backend Setup
+The backend handles image processing and AI model inference.
+```bash
+cd backend
+chmod +x start.sh
+./start.sh
+```
+*The backend will run on [http://localhost:8000](http://localhost:8000).*
 
-3. **Start the development server**
-   ```bash
-   npm run dev
-   ```
+#### 3. Frontend Setup
+In a new terminal window:
+```bash
+npm install
+npm run dev
+```
+*The frontend will run on [http://localhost:5173](http://localhost:5173).*
 
-4. **Build for production**
-   ```bash
-   npm run build
-   ```
+> [!IMPORTANT]
+> The **FastAPI backend must be running** for the analysis features to work. Check the connection indicator in the dashboard header to ensure the backend is online.
 
 ## 🗺️ Future Roadmap
 

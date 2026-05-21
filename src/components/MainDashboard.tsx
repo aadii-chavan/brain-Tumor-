@@ -8,31 +8,90 @@ const MainDashboard: React.FC = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<any>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [backendStatus, setBackendStatus] = useState<'online' | 'offline' | 'checking' | 'model_error'>('checking');
+  const [modelInfo, setModelInfo] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  const simulateAnalysis = () => {
+  React.useEffect(() => {
+    checkBackendHealth();
+    fetchModelInfo();
+  }, []);
+
+  const checkBackendHealth = async () => {
+    try {
+      const response = await fetch('http://localhost:8000/health');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.model_loaded) {
+          setBackendStatus('online');
+        } else {
+          setBackendStatus('model_error');
+        }
+      } else {
+        setBackendStatus('offline');
+      }
+    } catch (err) {
+      setBackendStatus('offline');
+    }
+  };
+
+  const fetchModelInfo = async () => {
+    try {
+      const response = await fetch('http://localhost:8000/model-info');
+      if (response.ok) {
+        const data = await response.json();
+        setModelInfo(data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch model info", err);
+    }
+  };
+
+  const handleAnalysis = async (file: File) => {
     setIsAnalyzing(true);
     setAnalysisResult(null);
-    
-    setTimeout(() => {
+    setError(null);
+    setPreviewUrl(URL.createObjectURL(file));
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await fetch('http://localhost:8000/predict', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Analysis failed. Please check the backend connection.');
+      }
+
+      const data = await response.json();
+      
       setAnalysisResult({
         id: "NS-" + Math.floor(100000 + Math.random() * 900000),
-        patientId: "PAT-0042",
         date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
-        confidence: 94.7,
-        classes: [
-          { name: 'Glioma', value: 88, color: 'var(--accent-danger)' },
-          { name: 'Meningioma', value: 12, color: 'var(--accent-primary)' },
-          { name: 'Pituitary', value: 5, color: 'var(--accent-secondary)' },
-          { name: 'No Abnormalities', value: 2, color: 'var(--accent-success)' }
-        ],
+        prediction: data.prediction,
+        confidence: data.confidence,
+        classes: Object.entries(data.all_probabilities).map(([name, value]: [string, any]) => ({
+          name,
+          value,
+          color: name === data.prediction ? 'var(--accent-primary)' : 
+                 name === 'No Tumor' ? 'var(--accent-success)' : 'var(--accent-secondary)'
+        })),
+        heatmap_image: data.heatmap_image,
         stats: [
-          { label: 'Model Accuracy', value: '98.2%', icon: CheckCircle2 },
-          { label: 'Diagnostic Reliability', value: 'High', icon: AlertCircle },
-          { label: 'Latency', value: '1.2s', icon: Scan }
+          { label: 'Model Architecture', value: modelInfo?.model_name || 'VGG16', icon: CheckCircle2 },
+          { label: 'Scans Analyzed', value: modelInfo?.total_scans_analyzed || '...', icon: Scan },
+          { label: 'Accuracy', value: modelInfo?.accuracy || '...', icon: FileText }
         ]
       });
+    } catch (err: any) {
+      setError(err.message || 'An error occurred during analysis');
+    } finally {
       setIsAnalyzing(false);
-    }, 3000);
+    }
   };
 
   const handleDrag = (e: React.DragEvent) => {
@@ -50,13 +109,13 @@ const MainDashboard: React.FC = () => {
     e.stopPropagation();
     setDragActive(false);
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      simulateAnalysis();
+      handleAnalysis(e.dataTransfer.files[0]);
     }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      simulateAnalysis();
+      handleAnalysis(e.target.files[0]);
     }
   };
 
@@ -84,7 +143,17 @@ const MainDashboard: React.FC = () => {
       <div className="dashboard-header">
         <div>
           <h2 className="section-title">Diagnostic Workspace</h2>
-          <p className="section-subtitle">Real-time Neural Imaging Pipeline</p>
+          <div className="status-indicator-group">
+            <p className="section-subtitle">Real-time Neural Imaging Pipeline</p>
+            <div className={`status-badge ${backendStatus}`}>
+              <div className="status-dot"></div>
+              <span>
+                {backendStatus === 'online' ? 'Backend Online' : 
+                 backendStatus === 'model_error' ? 'Model Not Found' : 
+                 backendStatus === 'offline' ? 'Backend Offline' : 'Checking Status...'}
+              </span>
+            </div>
+          </div>
         </div>
         <div className="header-actions">
           <button className="secondary-btn" onClick={() => setAnalysisResult(null)} disabled={!analysisResult}>
@@ -128,6 +197,7 @@ const MainDashboard: React.FC = () => {
               <div className="upload-text">
                 <h3>Initial Image Upload</h3>
                 <p>Drag MRI sequence here or <span className="text-highlight">browse local files</span></p>
+                {error && <div className="error-message"><AlertCircle size={16} /> {error}</div>}
                 <div className="format-badges">
                   <span className="format-badge">DICOM</span>
                   <span className="format-badge">NIfTI</span>
@@ -194,13 +264,17 @@ const MainDashboard: React.FC = () => {
                   </div>
                   <div className="mri-viewer">
                     <div className="mri-frame">
-                      <img src="/mri_scan.png" alt="Source" className="mri-image" />
-                      <div className="mri-label">Axial T1w Pre-contrast</div>
+                      {previewUrl && <img src={previewUrl} alt="Source" className="mri-image" />}
+                      <div className="mri-label">Original MRI Scan</div>
                     </div>
                     <div className="mri-frame highlight">
-                      <img src="/mri_heatmap.png" alt="Heatmap" className="mri-image" />
+                      <img src={analysisResult.heatmap_image} alt="Heatmap" className="mri-image" />
                       <div className="mri-label">Grad-CAM Activation Map</div>
                     </div>
+                  </div>
+                  <div className="prediction-banner">
+                    <div className="prediction-label">Diagnosis:</div>
+                    <div className="prediction-value">{analysisResult.prediction}</div>
                   </div>
                 </div>
 
@@ -286,6 +360,73 @@ const MainDashboard: React.FC = () => {
           display: flex;
           justify-content: space-between;
           align-items: flex-end;
+        }
+
+        .status-indicator-group {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+        }
+
+        .status-badge {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 4px 10px;
+          border-radius: 6px;
+          font-size: 0.75rem;
+          font-weight: 600;
+          background: rgba(15, 23, 42, 0.6);
+          border: 1px solid var(--border-color);
+        }
+
+        .status-badge.online { color: var(--accent-success); border-color: rgba(16, 185, 129, 0.3); }
+        .status-badge.offline { color: var(--accent-danger); border-color: rgba(239, 68, 68, 0.3); }
+        .status-badge.model_error { color: var(--accent-warning); border-color: rgba(245, 158, 11, 0.3); }
+        .status-badge.checking { color: var(--text-muted); }
+
+        .status-dot {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background: currentColor;
+          box-shadow: 0 0 8px currentColor;
+        }
+
+        .error-message {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          color: var(--accent-danger);
+          background: rgba(239, 68, 68, 0.1);
+          padding: 10px 16px;
+          border-radius: 8px;
+          margin-bottom: 16px;
+          font-size: 0.875rem;
+        }
+
+        .prediction-banner {
+          margin-top: 20px;
+          padding: 16px;
+          background: rgba(var(--accent-primary-rgb), 0.1);
+          border: 1px solid rgba(var(--accent-primary-rgb), 0.2);
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .prediction-label {
+          font-size: 0.875rem;
+          color: var(--text-secondary);
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        }
+
+        .prediction-value {
+          font-size: 1.25rem;
+          font-weight: 800;
+          color: var(--accent-primary);
         }
 
         .section-title {
