@@ -39,7 +39,7 @@ env/
 .mypy_cache/
 *.egg-info/
 
-# Backend debug / scratch (keep only main.py, gradcam.py, preprocess.py, etc.)
+# Backend debug / scratch (keep only main.py, preprocess.py, etc.)
 backend/debug_*.py
 backend/check_activation.py
 backend/test_norm.py

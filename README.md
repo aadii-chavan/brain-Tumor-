@@ -10,8 +10,7 @@ NeuroScan AI is a state-of-the-art diagnostic workspace designed for neuro-radio
 ## ✨ Key Features
 
 ### 🔍 Advanced Diagnostic Workspace
-- **Multi-Spectral Visualization**: View axial T1w pre-contrast images alongside automated analysis.
-- **Grad-CAM Activation Maps**: AI-driven heatmaps highlighting regions of interest for diagnostic transparency.
+- **MRI Visualization**: View uploaded axial MRI scans with automated tumor classification.
 - **Drag-and-Drop Pipeline**: Seamlessly upload DICOM, NIfTI, and standard image formats for immediate processing.
 
 ### 📊 Real-Time Analytics

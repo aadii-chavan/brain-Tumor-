@@ -19,7 +19,7 @@ def preprocess_image(image_bytes: bytes, target_size=(224, 224)):
     # Convert to numpy array
     img_array = np.array(image).astype('float32')
     
-    # Original image for GradCAM (keep values in [0, 255])
+    # Original image for display (keep values in [0, 255])
     original_img = img_array.copy().astype('uint8')
     
     # Apply Pruning Math: (x / 255.0) * SCALES

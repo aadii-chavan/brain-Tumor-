@@ -80,7 +80,6 @@ const MainDashboard: React.FC = () => {
           color: name === data.prediction ? 'var(--accent-primary)' : 
                  name === 'No Tumor' ? 'var(--accent-success)' : 'var(--accent-secondary)'
         })),
-        heatmap_image: data.heatmap_image,
         stats: [
           { label: 'Model Architecture', value: modelInfo?.model_name || 'VGG16', icon: CheckCircle2 },
           { label: 'Scans Analyzed', value: modelInfo?.total_scans_analyzed || '...', icon: Scan },
@@ -259,17 +258,13 @@ const MainDashboard: React.FC = () => {
               <div className="visuals-column">
                 <div className="mri-analysis-card glass-card">
                   <div className="card-header">
-                    <h4>Multi-Spectral Visualization</h4>
+                    <h4>MRI Scan</h4>
                     <button className="icon-btn"><Maximize2 size={16} /></button>
                   </div>
                   <div className="mri-viewer">
                     <div className="mri-frame">
-                      {previewUrl && <img src={previewUrl} alt="Source" className="mri-image" />}
-                      <div className="mri-label">Original MRI Scan</div>
-                    </div>
-                    <div className="mri-frame highlight">
-                      <img src={analysisResult.heatmap_image} alt="Heatmap" className="mri-image" />
-                      <div className="mri-label">Grad-CAM Activation Map</div>
+                      {previewUrl && <img src={previewUrl} alt="MRI scan" className="mri-image" />}
+                      <div className="mri-label">Uploaded MRI Scan</div>
                     </div>
                   </div>
                   <div className="prediction-banner">
@@ -406,13 +401,17 @@ const MainDashboard: React.FC = () => {
         }
 
         .prediction-banner {
-          margin-top: 20px;
-          padding: 16px;
+          margin-top: 16px;
+          max-width: 300px;
+          margin-left: auto;
+          margin-right: auto;
+          padding: 12px 16px;
           background: rgba(var(--accent-primary-rgb), 0.1);
           border: 1px solid rgba(var(--accent-primary-rgb), 0.2);
-          border-radius: 12px;
+          border-radius: 10px;
           display: flex;
           align-items: center;
+          justify-content: center;
           gap: 12px;
         }
 
@@ -666,14 +665,24 @@ const MainDashboard: React.FC = () => {
 
         .main-grid {
           display: grid;
-          grid-template-columns: 1fr 380px;
+          grid-template-columns: minmax(0, 1fr) 380px;
           gap: 24px;
+          align-items: start;
         }
 
         .visuals-column {
           display: flex;
           flex-direction: column;
-          gap: 24px;
+          gap: 20px;
+          min-width: 0;
+        }
+
+        .mri-analysis-card {
+          padding: 20px 24px 24px;
+        }
+
+        .mri-analysis-card .card-header {
+          margin-bottom: 12px;
         }
 
         .card-header {
@@ -691,27 +700,30 @@ const MainDashboard: React.FC = () => {
         }
 
         .mri-viewer {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 20px;
+          display: flex;
+          justify-content: center;
+          padding: 4px 0 8px;
         }
 
         .mri-frame {
           position: relative;
+          width: 100%;
+          max-width: 300px;
+          margin: 0 auto;
           background: #000;
-          border-radius: 12px;
+          border-radius: 10px;
           overflow: hidden;
           border: 1px solid var(--border-color);
-        }
-
-        .mri-frame.highlight {
-          border-color: rgba(var(--accent-primary-rgb), 0.3);
+          box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
         }
 
         .mri-image {
+          display: block;
           width: 100%;
-          aspect-ratio: 1;
-          object-fit: cover;
+          max-height: 260px;
+          height: auto;
+          object-fit: contain;
+          object-position: center;
         }
 
         .mri-label {
@@ -719,11 +731,13 @@ const MainDashboard: React.FC = () => {
           bottom: 0;
           left: 0;
           right: 0;
-          padding: 8px 12px;
-          background: rgba(0,0,0,0.7);
+          padding: 6px 10px;
+          background: rgba(0, 0, 0, 0.75);
           backdrop-filter: blur(4px);
-          font-size: 0.75rem;
+          font-size: 0.6875rem;
           font-weight: 500;
+          letter-spacing: 0.03em;
+          text-align: center;
         }
 
         .stats-strip {

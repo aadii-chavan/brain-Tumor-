@@ -141,23 +141,10 @@ async def predict(file: UploadFile = File(...)):
         class_idx = np.argmax(predictions[0])
         confidence = float(predictions[0][class_idx])
         
-        try:
-            from gradcam import get_gradcam_heatmap, apply_heatmap
-            import cv2
-            heatmap = get_gradcam_heatmap(model, img_array, "top_conv")
-            orig_img_bgr = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
-            heatmap_image_data = apply_heatmap(heatmap, orig_img_bgr)
-        except Exception as e:
-            print(f"DEBUG: heatmap failed {e}")
-            import base64, cv2
-            _, buffer = cv2.imencode('.png', cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR))
-            heatmap_image_data = f"data:image/png;base64,{base64.b64encode(buffer).decode('utf-8')}"
-        
         return {
             "prediction": CLASSES[class_idx],
             "confidence": round(confidence * 100, 2),
             "all_probabilities": {CLASSES[i]: round(float(predictions[0][i]) * 100, 2) for i in range(len(CLASSES))},
-            "heatmap_image": heatmap_image_data
         }
     except Exception as e:
         print(f"ERROR: Prediction failed: {e}")
